@@ -4,12 +4,16 @@ import org.junit.Test;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
+
+
 public class FluidMeshTest {
+
 
     @Test
     public void getVertexList() {
@@ -21,7 +25,7 @@ public class FluidMeshTest {
         graphics2D.clearRect(0, 0 , 30, 30);
         graphics2D.setColor(Color.BLACK);
         graphics2D.fill(new Polygon(new int[]{10, 20, 20, 10},new int[]{10, 10, 20, 20}, 4));
-        int[] B=image.getData().getPixels(0, 0,30,30, new int[900]);
+
 
     }
 

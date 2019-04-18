@@ -1,6 +1,7 @@
 package FluidSim.Display;
 
 import FluidSim.Mesh.MeshCreator;
+import FluidSim.Mesh.PolygonDistanceField;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
@@ -10,6 +11,8 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -17,6 +20,7 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeType;
 import org.locationtech.jts.geom.Geometry;
+import javafx.embed.swing.SwingFXUtils;
 
 
 import java.util.ArrayList;
@@ -106,11 +110,14 @@ public class DraggablePolygon {
     public void renderMesh() {
         if(this.autoMesh && this.meshContainer!=null) {
             if (!this.meshContainer.getChildren().isEmpty()) { this.meshContainer.getChildren().clear(); }
-
+            PolygonDistanceField pdf = new PolygonDistanceField(canvasWidth, canvasHeight,1 , getPolygon()); /**TODO: put in own method*/
+            Image image1 = SwingFXUtils.toFXImage(pdf.getImage(), null);
+            ImageView imageView = new ImageView(image1);
+            this.meshContainer.getChildren().add(imageView);
             Geometry tris = MeshCreator.doTriangulator(getPolygon(), canvasWidth, canvasHeight);
-            for (int i = 0; i < tris.getNumGeometries(); i++) {
-                this.meshContainer.getChildren().add(MeshCreator.JTSPolyToFXPoly(tris.getGeometryN(i)));
-            }
+            //for (int i = 0; i < tris.getNumGeometries(); i++) {
+            //    this.meshContainer.getChildren().add(MeshCreator.JTSPolyToFXPoly(tris.getGeometryN(i)));
+            //}
         }
     }
 

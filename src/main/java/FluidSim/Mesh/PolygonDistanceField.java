@@ -6,7 +6,13 @@ import javafx.scene.shape.Polygon;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-///
+import java.awt.image.WritableRaster;
+import java.io.WriteAbortedException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+
 public class PolygonDistanceField {
     private Polygon polygon;
     private BufferedImage image;
@@ -16,17 +22,74 @@ public class PolygonDistanceField {
     public PolygonDistanceField(double domainWidth, double domainHeight, double pixelsPerUnitDistance, Polygon polygon){
         domainBounds= new DomainCoordinate(domainWidth,domainHeight);
         this.polygon= polygon;
-
+        this.pixelsPerUnitDistance= pixelsPerUnitDistance;
         image= new BufferedImage(getPixelWidth(), getPixelHeight(), BufferedImage.TYPE_BYTE_BINARY);
         Graphics2D graphics2D = image.createGraphics();
         graphics2D.setBackground(Color.WHITE);
         graphics2D.clearRect(0, 0 , image.getWidth(),image.getHeight());
         graphics2D.setColor(Color.BLACK);
         graphics2D.fill(JFXPolyToAWTPoly(polygon));
+        double[] A = IntStream.of(image.getData().getPixels(0, 0,image.getWidth(),image.getHeight(), new int[image.getWidth()*image.getHeight()])).mapToDouble(d -> (double) d*Double.MAX_VALUE).toArray();
+        Image1DArray B = new Image1DArray(A, image.getWidth(), image.getHeight());
+        Image1DArray C = distanceTransform2D(B);
+        int[] D = DoubleStream.of(C.rawImageArray).mapToInt(d -> (int) Math.round(255/(0.01*Math.sqrt(d)+1))).toArray();
 
+        image= new BufferedImage(getPixelWidth(), getPixelHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        image.getRaster().setPixels(0, 0, getPixelWidth(), getPixelHeight(), D);
+    }
+
+    public Image1DArray distanceTransform2D(Image1DArray func2D){
+        Image1DArray distanceTransformedfunc2D = new Image1DArray(func2D.width, func2D.height);
+        for ( int i = 0; i < func2D.height; i++) {
+            distanceTransformedfunc2D.setPixelRow(i, distanceTransform1D(func2D.getPixelRow(i)));
+        }
+        for ( int i = 0; i < func2D.width; i++) {
+            distanceTransformedfunc2D.setPixelColumn(i, distanceTransform1D(distanceTransformedfunc2D.getPixelColumn(i)));
+        }
+
+        return distanceTransformedfunc2D;
+    }
+
+    public double[] distanceTransform1D(double[] func){
+        double[] distanceTransform = new double[func.length];
+        int k = 0;
+        int[] vertices = new int[func.length];
+        double[] intersections = new double[func.length+1];
+        vertices[0]=0;
+        intersections[0]=Double.NEGATIVE_INFINITY;
+        intersections[1]=Double.POSITIVE_INFINITY;
+        for (int q=1; q<func.length; q++){
+            double s = parabolaIntersection(q, func[q], vertices[k],func[vertices[k]]);
+            if (s<=intersections[k]) {
+                k--;
+                q--;
+            } else {
+                k++;
+                vertices[k]=q;
+                intersections[k]=s;
+                intersections[k+1]=Double.POSITIVE_INFINITY;
+            }
+        }
+        k=0;
+        for (int q=0; q<func.length; q++) {
+            while (intersections[k+1]<q){
+                k++;
+            }
+            distanceTransform[q] = ( q - vertices[k] )*( q - vertices[k] ) + func[vertices[k]];
+        }
+        return distanceTransform;
+    }
+
+    private double parabolaIntersection(int vertexX1, double vertexY1,int vertexX2, double vertexY2){
+        return ( (vertexY1 + vertexX1*vertexX1) - (vertexY2 + vertexX2*vertexX2) )/( 2.0*(vertexX1 - vertexX2) );
+    }
+
+    public BufferedImage getImage() {
+        return image;
     }
 
     public PixelCoordinate getPixelBounds() {
+        PixelCoordinate x = domainToPixelCoord(domainBounds);
         return domainToPixelCoord(domainBounds);
     }
 
@@ -35,6 +98,7 @@ public class PolygonDistanceField {
     }
 
     public int getPixelHeight(){
+        int x = getPixelBounds().pixel_yCoord;
         return getPixelBounds().pixel_yCoord;
     }
 
@@ -43,8 +107,8 @@ public class PolygonDistanceField {
         int[] xPoints = new int[a.length/2];
         int[] yPoints = new int[a.length/2];
         for (int i=0; i<a.length; i+=2 ){
-            xPoints[i]=domainToPixelCoord(a[i]);
-            yPoints[i+1]=domainToPixelCoord(a[i+1]);
+            xPoints[i/2]=domainToPixelCoord(a[i]);
+            yPoints[i/2]=domainToPixelCoord(a[i+1]);
         }
         return new java.awt.Polygon(xPoints,yPoints,a.length/2);
     }
@@ -70,6 +134,59 @@ public class PolygonDistanceField {
         double x= (pixelCoord.pixel_xCoord+1./2.)/pixelsPerUnitDistance;
         double y= (pixelCoord.pixel_yCoord+1./2.)/pixelsPerUnitDistance;
         return new DomainCoordinate(x, y);
+    }
+
+
+    /** encapsulates a 2d image in 1D array form with methods for accessing pixels with x, y coordinates*/
+    class Image1DArray{
+        double[] rawImageArray;
+        int width;
+        int height;
+
+        Image1DArray(double[] rawImageArray, int width, int height ){
+            this.rawImageArray=rawImageArray;
+            this.width=width;
+            this.height=height;
+        }
+
+        Image1DArray( int width, int height ){
+            this.rawImageArray= new double[width*height];
+            this.width=width;
+            this.height=height;
+        }
+
+        public double getPixel(int x, int y){
+            return rawImageArray[y*width+x];
+        }
+
+        public double[] getPixelColumn(int x){
+            double[] column = new double[height];
+            for( int i = 0; i < height; i++){
+                column[i]= getPixel(x, i);
+            }
+            return column;
+        }
+
+        public double[] getPixelRow(int y){
+            return Arrays.copyOfRange(rawImageArray, y*width, (y+1)*width);
+        }
+
+        public void setPixel(int x, int y, double value){
+            rawImageArray[y*width+x] = value;
+        }
+
+        public void setPixelRow(int y, double[] values){
+            for( int i = 0; i < width; i++){
+                setPixel(i, y, values[i]);
+            }
+        }
+
+        public void setPixelColumn(int x, double[] values){
+            for( int i = 0; i < height; i++){
+                setPixel(x, i, values[i]);
+            }
+        }
+
     }
 
     class DomainCoordinate {
