@@ -6,10 +6,6 @@ import javafx.scene.shape.Polygon;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
-import java.io.WriteAbortedException;
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
@@ -18,8 +14,9 @@ public class PolygonDistanceField {
     private BufferedImage image;
     private double pixelsPerUnitDistance;
     private DomainCoordinate domainBounds;
+    public Image1DArray D;
 
-    public PolygonDistanceField(double domainWidth, double domainHeight, double pixelsPerUnitDistance, Polygon polygon){
+    public PolygonDistanceField(double domainWidth, double domainHeight, double pixelsPerUnitDistance, Polygon polygon){ /**TODO: big cleanup, make it extend abstract pixel-sampled domain*/
         domainBounds= new DomainCoordinate(domainWidth,domainHeight);
         this.polygon= polygon;
         this.pixelsPerUnitDistance= pixelsPerUnitDistance;
@@ -32,10 +29,13 @@ public class PolygonDistanceField {
         double[] A = IntStream.of(image.getData().getPixels(0, 0,image.getWidth(),image.getHeight(), new int[image.getWidth()*image.getHeight()])).mapToDouble(d -> (double) d*Double.MAX_VALUE).toArray();
         Image1DArray B = new Image1DArray(A, image.getWidth(), image.getHeight());
         Image1DArray C = distanceTransform2D(B);
-        int[] D = DoubleStream.of(C.rawImageArray).mapToInt(d -> (int) Math.round(255/(0.01*Math.sqrt(d)+1))).toArray();
+
+        D = new Image1DArray(DoubleStream.of(C.rawImageArray).map(d -> Math.round(255/(0.01*Math.pow(d,1.)+1))).toArray(), image.getWidth(), image.getHeight());
+        //Image1DArray E = Dithering.doFloydSteinbergDithering(C);
+        int[] F = DoubleStream.of(D.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
 
         image= new BufferedImage(getPixelWidth(), getPixelHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        image.getRaster().setPixels(0, 0, getPixelWidth(), getPixelHeight(), D);
+        image.getRaster().setPixels(0, 0, getPixelWidth(), getPixelHeight(), F);
     }
 
     public Image1DArray distanceTransform2D(Image1DArray func2D){
@@ -88,6 +88,10 @@ public class PolygonDistanceField {
         return image;
     }
 
+    public DomainCoordinate getDomainBounds() {
+        return domainBounds;
+    }
+
     public PixelCoordinate getPixelBounds() {
         PixelCoordinate x = domainToPixelCoord(domainBounds);
         return domainToPixelCoord(domainBounds);
@@ -136,58 +140,6 @@ public class PolygonDistanceField {
         return new DomainCoordinate(x, y);
     }
 
-
-    /** encapsulates a 2d image in 1D array form with methods for accessing pixels with x, y coordinates*/
-    class Image1DArray{
-        double[] rawImageArray;
-        int width;
-        int height;
-
-        Image1DArray(double[] rawImageArray, int width, int height ){
-            this.rawImageArray=rawImageArray;
-            this.width=width;
-            this.height=height;
-        }
-
-        Image1DArray( int width, int height ){
-            this.rawImageArray= new double[width*height];
-            this.width=width;
-            this.height=height;
-        }
-
-        public double getPixel(int x, int y){
-            return rawImageArray[y*width+x];
-        }
-
-        public double[] getPixelColumn(int x){
-            double[] column = new double[height];
-            for( int i = 0; i < height; i++){
-                column[i]= getPixel(x, i);
-            }
-            return column;
-        }
-
-        public double[] getPixelRow(int y){
-            return Arrays.copyOfRange(rawImageArray, y*width, (y+1)*width);
-        }
-
-        public void setPixel(int x, int y, double value){
-            rawImageArray[y*width+x] = value;
-        }
-
-        public void setPixelRow(int y, double[] values){
-            for( int i = 0; i < width; i++){
-                setPixel(i, y, values[i]);
-            }
-        }
-
-        public void setPixelColumn(int x, double[] values){
-            for( int i = 0; i < height; i++){
-                setPixel(x, i, values[i]);
-            }
-        }
-
-    }
 
     class DomainCoordinate {
         double domain_xCoord, domain_yCoord;

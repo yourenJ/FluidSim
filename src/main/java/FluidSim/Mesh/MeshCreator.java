@@ -11,7 +11,7 @@ import org.locationtech.jts.triangulate.Segment;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
-//
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,7 +19,7 @@ import java.util.List;
 
 
 public class MeshCreator {
-    //public static void main(String[] args) {
+
 
     public static Geometry doTriangulation(javafx.scene.shape.Polygon fxPolygon, double canvasX, double canvasY) {
         Double[] holepoints=fxPolygon.getPoints().toArray(new Double[0]);

@@ -19,8 +19,8 @@ public class MainFrame extends Application {
     public void start(Stage mainStage) {
         mainStage.setTitle("FluidSim");
         BorderPane mainPane= new BorderPane();
-        Pane centerPane= new Pane(); //
-        centerPane.setMinSize(800, 600);//sets the main layout of the program
+        Pane centerPane= new Pane();
+        centerPane.setMinSize(800, 600);
 
 
         /*set up top menu*/
