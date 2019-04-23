@@ -76,5 +76,9 @@ public class Image1DDoubleArray {
         return min;
     }
 
+    public int[] getXYCoordFromArrayIndex(int arrayIndex){
+        return new int[]{arrayIndex%width,arrayIndex/width};
+    }
+
 }
 

@@ -46,7 +46,7 @@ public class MeshCreator {
 
         ObservableList<Double> holepoints=fxPolygon.getPoints();  //list x1, y1, x2, y2, x3, y3...
 
-        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.AcceptanceRejectionMethod(probDensFunc);
+        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.AcceptanceRejectionMethod(probDensFunc, 2000);
 
         ArrayList<Coordinate> holeCoords = new ArrayList<>(holepoints.size()/2);
         for(int i =0; i<holepoints.size()/2; i++){

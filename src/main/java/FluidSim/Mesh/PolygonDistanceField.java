@@ -11,7 +11,7 @@ public class PolygonDistanceField extends PixelSampledFunction{
     private Polygon polygon;
     private BufferedImage image;
 
-    public PolygonDistanceField(double domainWidth, double domainHeight, double pixelsPerUnitDistance, Polygon polygon){ /**TODO: big cleanup, make it extend abstract pixel-sampled domain*/
+    public PolygonDistanceField(double domainWidth, double domainHeight, double pixelsPerUnitDistance, Polygon polygon){ /**TODO: big cleanup*/
         super(domainWidth, domainHeight, pixelsPerUnitDistance);
 
         domainBounds= new DomainCoordinate(domainWidth,domainHeight);
@@ -25,9 +25,10 @@ public class PolygonDistanceField extends PixelSampledFunction{
         graphics2D.fill(JFXPolyToAWTPoly(polygon));
         double[] A = IntStream.of(image.getData().getPixels(0, 0,image.getWidth(),image.getHeight(), new int[image.getWidth()*image.getHeight()])).mapToDouble(d -> (double) d*Double.MAX_VALUE).toArray();
         Image1DDoubleArray B = new Image1DDoubleArray(A, image.getWidth(), image.getHeight());
-        functionAsPixelSamples = distanceTransform2D(B);
-
-        Image1DDoubleArray C = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(d -> Math.round(255/(0.01*Math.pow(d,1.)+1))).toArray(), image.getWidth(), image.getHeight());
+        Image1DDoubleArray B2 = distanceTransform2D(B);
+        double max = B2.getMaxPixelValue();
+        functionAsPixelSamples = new Image1DDoubleArray(DoubleStream.of(B2.rawImageArray).map(d -> d==0? max+1 : d).toArray(), image.getWidth(), image.getHeight());
+        Image1DDoubleArray C = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(d -> Math.round(255*d/max)).toArray(), image.getWidth(), image.getHeight());
         //Image1DDoubleArray E = Dithering.doFloydSteinbergDithering(C);
         int[] F = DoubleStream.of(C.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
 

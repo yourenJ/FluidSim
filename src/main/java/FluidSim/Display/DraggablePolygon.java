@@ -110,7 +110,9 @@ public class DraggablePolygon {
 
     public void renderMesh() {
         if(this.autoMesh && this.meshContainer!=null) {
-            if (!this.meshContainer.getChildren().isEmpty()) { this.meshContainer.getChildren().clear(); }
+            if (!this.meshContainer.getChildren().isEmpty()) {
+                this.meshContainer.getChildren().clear();
+            }
             PolygonDistanceField pdf = new PolygonDistanceField(canvasWidth, canvasHeight,1 , getPolygon()); /**TODO: put in own method*/
             Image image1 = SwingFXUtils.toFXImage(pdf.getImage(), null);
             ImageView imageView = new ImageView(image1);
