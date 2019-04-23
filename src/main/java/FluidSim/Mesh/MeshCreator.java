@@ -42,9 +42,11 @@ public class MeshCreator {
         cdtb.setSites(polygon);
         return cdtb.getTriangles(factory);
     }
-    public static Geometry doTriangulator(javafx.scene.shape.Polygon fxPolygon, double canvasX, double canvasY){
+    public static Geometry doTriangulator(javafx.scene.shape.Polygon fxPolygon, PolygonDistanceField probDensFunc, double canvasX, double canvasY){
 
         ObservableList<Double> holepoints=fxPolygon.getPoints();  //list x1, y1, x2, y2, x3, y3...
+
+        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.AcceptanceRejectionMethod(probDensFunc);
 
         ArrayList<Coordinate> holeCoords = new ArrayList<>(holepoints.size()/2);
         for(int i =0; i<holepoints.size()/2; i++){
@@ -75,7 +77,7 @@ public class MeshCreator {
         ArrayList<ConstraintVertex> allSegVerts = new ArrayList<>(shellSegVerts); allSegVerts.addAll(holeSegVerts);
 
         ArrayList<Segment> allSegs = new ArrayList<>(shellSegs); allSegs.addAll(holeSegs);
-        ArrayList<ConstraintVertex> startVerts = new ArrayList<>(); startVerts.add(new ConstraintVertex(new Coordinate(99, 99)));
+        ArrayList<ConstraintVertex> startVerts = new ArrayList<>(); startVerts.addAll(generatedPoints);
         GeometryFactory factory = new GeometryFactory();
         ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(startVerts, 1);
         cdt.setConstraints(allSegs, allSegVerts);

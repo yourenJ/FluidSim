@@ -23,8 +23,6 @@ import org.locationtech.jts.geom.Geometry;
 import javafx.embed.swing.SwingFXUtils;
 
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**  a polygon with draggable corners and the option to create and render a Delaunay triangulation mesh
     Fields:
@@ -45,15 +43,22 @@ public class DraggablePolygon {
     public void setCanvasSize(double width, double height){
         canvasHeight=height; canvasWidth=width;
     }
+
     public double[] getCanvasSize(){
         return new double[]{canvasWidth,canvasHeight};
     }
 
-    public Group getMeshContainer() { return meshContainer;}
+    public Group getMeshContainer() {
+        return meshContainer;
+    }
 
-    public void setMeshContainer(Group meshContainer) { this.meshContainer=meshContainer;}
+    public void setMeshContainer(Group meshContainer) {
+        this.meshContainer=meshContainer;
+    }
 
-    public Polygon getPolygon() { return polygon; }
+    public Polygon getPolygon() {
+        return polygon;
+    }
 
     public void setPolygon(Polygon polygon) {
         this.polygon = polygon;
@@ -61,10 +66,17 @@ public class DraggablePolygon {
         createControlAnchors();
     }
 
-    public boolean isAutoMesh(){ return autoMesh; }
-    public void setAutoMesh(boolean b){ autoMesh=b; }
+    public boolean isAutoMesh(){
+        return autoMesh;
+    }
 
-    public ObservableList<Anchor> getAnchorList() { return anchorList; }
+    public void setAutoMesh(boolean b){
+        autoMesh=b;
+    }
+
+    public ObservableList<Anchor> getAnchorList() {
+        return anchorList;
+    }
 
     /* Unused: public org.poly2tri.geometry.polygon.Polygon getTriangulatablePolygon() {
         List<org.poly2tri.geometry.polygon.PolygonPoint> points = new ArrayList<>(polygon.getPoints().size()/2);
@@ -87,17 +99,6 @@ public class DraggablePolygon {
         autoMesh=false;
     }
 
-    public DraggablePolygon(Group meshContainer, double canvasWidth, double canvasHeight, boolean autoMesh, double... points) {
-        this.canvasHeight=canvasHeight;
-        this.canvasWidth=canvasWidth;
-        this.meshContainer= meshContainer;
-        polygon = new Polygon(points);
-        this.autoMesh=autoMesh;
-        renderMesh();
-        setPolygonProperties();
-        createControlAnchors();
-    }
-
     public DraggablePolygon(double canvasWidth, double canvasHeight, double... points) {
         this.canvasHeight=canvasHeight;
         this.canvasWidth=canvasWidth;
@@ -114,10 +115,10 @@ public class DraggablePolygon {
             Image image1 = SwingFXUtils.toFXImage(pdf.getImage(), null);
             ImageView imageView = new ImageView(image1);
             this.meshContainer.getChildren().add(imageView);
-            Geometry tris = MeshCreator.doTriangulator(getPolygon(), canvasWidth, canvasHeight);
-            //for (int i = 0; i < tris.getNumGeometries(); i++) {
-            //    this.meshContainer.getChildren().add(MeshCreator.JTSPolyToFXPoly(tris.getGeometryN(i)));
-            //}
+            Geometry tris = MeshCreator.doTriangulator(getPolygon(), pdf, canvasWidth, canvasHeight);
+            for (int i = 0; i < tris.getNumGeometries(); i++) {
+                this.meshContainer.getChildren().add(MeshCreator.JTSPolyToFXPoly(tris.getGeometryN(i)));
+            }
         }
     }
 

@@ -6,11 +6,11 @@ import java.util.stream.DoubleStream;
 
 public class Dithering {
 
-    public static Image1DArray doFloydSteinbergDithering(Image1DArray inputImage){
+    public static Image1DDoubleArray doFloydSteinbergDithering(Image1DDoubleArray inputImage){
 
         DoubleUnaryOperator inputModulation = d -> 127; //Math.round(251/(0.01*Math.pow(d, 0.8) + 1) + 4); /*TODO: dithering should not be responsible for this.*/
 
-        Image1DArray outputImage = new Image1DArray(DoubleStream.of(inputImage.rawImageArray).map(inputModulation).toArray(), inputImage.width, inputImage.height);
+        Image1DDoubleArray outputImage = new Image1DDoubleArray(DoubleStream.of(inputImage.rawImageArray).map(inputModulation).toArray(), inputImage.width, inputImage.height);
         double maxPixel = 255.;//*outputImage.getMaxPixelValue();
         double A = 1.;
 

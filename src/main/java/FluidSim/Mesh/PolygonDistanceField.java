@@ -1,7 +1,5 @@
 package FluidSim.Mesh;
 
-
-
 import javafx.scene.shape.Polygon;
 
 import java.awt.*;
@@ -9,14 +7,13 @@ import java.awt.image.BufferedImage;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
-public class PolygonDistanceField {
+public class PolygonDistanceField extends PixelSampledFunction{
     private Polygon polygon;
     private BufferedImage image;
-    private double pixelsPerUnitDistance;
-    private DomainCoordinate domainBounds;
-    public Image1DArray D;
 
     public PolygonDistanceField(double domainWidth, double domainHeight, double pixelsPerUnitDistance, Polygon polygon){ /**TODO: big cleanup, make it extend abstract pixel-sampled domain*/
+        super(domainWidth, domainHeight, pixelsPerUnitDistance);
+
         domainBounds= new DomainCoordinate(domainWidth,domainHeight);
         this.polygon= polygon;
         this.pixelsPerUnitDistance= pixelsPerUnitDistance;
@@ -27,19 +24,23 @@ public class PolygonDistanceField {
         graphics2D.setColor(Color.BLACK);
         graphics2D.fill(JFXPolyToAWTPoly(polygon));
         double[] A = IntStream.of(image.getData().getPixels(0, 0,image.getWidth(),image.getHeight(), new int[image.getWidth()*image.getHeight()])).mapToDouble(d -> (double) d*Double.MAX_VALUE).toArray();
-        Image1DArray B = new Image1DArray(A, image.getWidth(), image.getHeight());
-        Image1DArray C = distanceTransform2D(B);
+        Image1DDoubleArray B = new Image1DDoubleArray(A, image.getWidth(), image.getHeight());
+        functionAsPixelSamples = distanceTransform2D(B);
 
-        D = new Image1DArray(DoubleStream.of(C.rawImageArray).map(d -> Math.round(255/(0.01*Math.pow(d,1.)+1))).toArray(), image.getWidth(), image.getHeight());
-        //Image1DArray E = Dithering.doFloydSteinbergDithering(C);
-        int[] F = DoubleStream.of(D.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
+        Image1DDoubleArray C = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(d -> Math.round(255/(0.01*Math.pow(d,1.)+1))).toArray(), image.getWidth(), image.getHeight());
+        //Image1DDoubleArray E = Dithering.doFloydSteinbergDithering(C);
+        int[] F = DoubleStream.of(C.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
 
         image= new BufferedImage(getPixelWidth(), getPixelHeight(), BufferedImage.TYPE_BYTE_GRAY);
         image.getRaster().setPixels(0, 0, getPixelWidth(), getPixelHeight(), F);
     }
 
-    public Image1DArray distanceTransform2D(Image1DArray func2D){
-        Image1DArray distanceTransformedfunc2D = new Image1DArray(func2D.width, func2D.height);
+    public BufferedImage getImage() {
+        return image;
+    }
+
+    public Image1DDoubleArray distanceTransform2D(Image1DDoubleArray func2D){
+        Image1DDoubleArray distanceTransformedfunc2D = new Image1DDoubleArray(func2D.width, func2D.height);
         for ( int i = 0; i < func2D.height; i++) {
             distanceTransformedfunc2D.setPixelRow(i, distanceTransform1D(func2D.getPixelRow(i)));
         }
@@ -84,28 +85,6 @@ public class PolygonDistanceField {
         return ( (vertexY1 + vertexX1*vertexX1) - (vertexY2 + vertexX2*vertexX2) )/( 2.0*(vertexX1 - vertexX2) );
     }
 
-    public BufferedImage getImage() {
-        return image;
-    }
-
-    public DomainCoordinate getDomainBounds() {
-        return domainBounds;
-    }
-
-    public PixelCoordinate getPixelBounds() {
-        PixelCoordinate x = domainToPixelCoord(domainBounds);
-        return domainToPixelCoord(domainBounds);
-    }
-
-    public int getPixelWidth(){
-        return getPixelBounds().pixel_xCoord;
-    }
-
-    public int getPixelHeight(){
-        int x = getPixelBounds().pixel_yCoord;
-        return getPixelBounds().pixel_yCoord;
-    }
-
     public java.awt.Polygon JFXPolyToAWTPoly(Polygon polygon){
         Double[] a= polygon.getPoints().toArray(new Double[0]);
         int[] xPoints = new int[a.length/2];
@@ -115,46 +94,6 @@ public class PolygonDistanceField {
             yPoints[i/2]=domainToPixelCoord(a[i+1]);
         }
         return new java.awt.Polygon(xPoints,yPoints,a.length/2);
-    }
-
-    public int domainToPixelCoord(double domainCoord){
-        int x= (int) Math.ceil(pixelsPerUnitDistance*domainCoord);
-        return x;
-    }
-
-    public double pixelToDomainCoord(int pixelCoord){
-        double x= (pixelCoord+1./2.)/pixelsPerUnitDistance;
-        return x;
-    }
-
-
-    public PixelCoordinate domainToPixelCoord(DomainCoordinate domainCoord){
-        int x= (int) Math.ceil(pixelsPerUnitDistance*domainCoord.domain_xCoord);
-        int y= (int) Math.ceil(pixelsPerUnitDistance*domainCoord.domain_yCoord);
-        return new PixelCoordinate(x,y);
-    }
-
-    public DomainCoordinate pixelToDomainCoord(PixelCoordinate pixelCoord){
-        double x= (pixelCoord.pixel_xCoord+1./2.)/pixelsPerUnitDistance;
-        double y= (pixelCoord.pixel_yCoord+1./2.)/pixelsPerUnitDistance;
-        return new DomainCoordinate(x, y);
-    }
-
-
-    class DomainCoordinate {
-        double domain_xCoord, domain_yCoord;
-        public DomainCoordinate(double domain_xCoord, double domain_yCoord){
-            this.domain_xCoord=domain_xCoord;
-            this.domain_yCoord=domain_yCoord;
-        }
-    }
-
-    class PixelCoordinate {
-        int pixel_xCoord, pixel_yCoord;
-        public PixelCoordinate(int pixel_xCoord, int pixel_yCoord){
-            this.pixel_xCoord=pixel_xCoord;
-            this.pixel_yCoord=pixel_yCoord;
-        }
     }
 
 }
