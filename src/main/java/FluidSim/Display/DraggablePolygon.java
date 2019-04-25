@@ -1,6 +1,7 @@
 package FluidSim.Display;
 
 import FluidSim.Mesh.MeshCreator;
+import FluidSim.Mesh.PointGeneration;
 import FluidSim.Mesh.PolygonDistanceField;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -19,8 +20,9 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeType;
-import org.locationtech.jts.geom.Geometry;
 import javafx.embed.swing.SwingFXUtils;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 
 
 
@@ -39,6 +41,7 @@ public class DraggablePolygon {
     private boolean autoMesh;
     private double canvasWidth;
     private double canvasHeight;
+    ConformingDelaunayTriangulator tris;
 
     public void setCanvasSize(double width, double height){
         canvasHeight=height; canvasWidth=width;
@@ -108,19 +111,25 @@ public class DraggablePolygon {
         createControlAnchors();
     }
 
-    public void renderMesh() {
+    public void renderMesh() { /**TODO: cleanup*/
         if(this.autoMesh && this.meshContainer!=null) {
             if (!this.meshContainer.getChildren().isEmpty()) {
                 this.meshContainer.getChildren().clear();
             }
-            PolygonDistanceField pdf = new PolygonDistanceField(canvasWidth, canvasHeight,1 , getPolygon()); /**TODO: put in own method*/
+            PolygonDistanceField pdf = new PolygonDistanceField(canvasWidth, canvasHeight,2 , getPolygon()); /**TODO: put in own method*/
             Image image1 = SwingFXUtils.toFXImage(pdf.getImage(), null);
             ImageView imageView = new ImageView(image1);
-            this.meshContainer.getChildren().add(imageView);
-            Geometry tris = MeshCreator.doTriangulator(getPolygon(), pdf, canvasWidth, canvasHeight);
-            for (int i = 0; i < tris.getNumGeometries(); i++) {
-                this.meshContainer.getChildren().add(MeshCreator.JTSPolyToFXPoly(tris.getGeometryN(i)));
+            imageView.setFitHeight(600); imageView.setFitWidth(800); /**TODO:width,height*/
+            //this.meshContainer.getChildren().add(imageView);
+            GeometryFactory factory = new GeometryFactory();
+            tris = MeshCreator.doTriangulator(getPolygon(), pdf, canvasWidth, canvasHeight);
+            for(int i = 0; i<5; i++ ) {
+                tris = PointGeneration.lloydRelaxation(tris, getPolygon(), canvasWidth, canvasHeight, pdf);
             }
+            for (int i = 0; i < tris.getSubdivision().getVoronoiDiagram(factory).getNumGeometries(); i++) {
+                this.meshContainer.getChildren().add(MeshCreator.JTSPolyToFXPoly(tris.getSubdivision().getVoronoiDiagram(factory).getGeometryN(i)));
+            }
+            this.meshContainer.toBack();
         }
     }
 
@@ -196,7 +205,7 @@ public class DraggablePolygon {
                     if (newY > 0 && newY < getScene().getHeight()) {
                         setCenterY(newY);
                     }
-                    renderMesh();
+                    //renderMesh();
                 }
             });
             setOnMouseEntered(new EventHandler<MouseEvent>() {

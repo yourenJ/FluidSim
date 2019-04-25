@@ -47,8 +47,16 @@ public abstract class PixelSampledFunction {
 
 
     public PixelCoordinate domainToPixelCoord(DomainCoordinate domainCoord){
-        int x= (int) Math.floor(pixelsPerUnitDistance*domainCoord.domain_xCoord);
-        int y= (int) Math.floor(pixelsPerUnitDistance*domainCoord.domain_yCoord);
+            double domain_xCoord = domainCoord.domain_xCoord;
+            double domain_yCoord = domainCoord.domain_yCoord;
+            if(domain_xCoord<0 || domain_xCoord>=PixelSampledFunction.this.getDomainBounds().domain_xCoord) {
+                domain_xCoord = domain_xCoord<0? 0: PixelSampledFunction.this.getDomainBounds().domain_xCoord - 0.5/pixelsPerUnitDistance;
+            }
+            if(domain_yCoord<0 || domain_yCoord>=PixelSampledFunction.this.getDomainBounds().domain_yCoord) {
+                domain_yCoord = domain_yCoord<0? 0: PixelSampledFunction.this.getDomainBounds().domain_yCoord - 0.5/pixelsPerUnitDistance;
+            }
+        int x= (int) Math.floor(pixelsPerUnitDistance*domain_xCoord);
+        int y= (int) Math.floor(pixelsPerUnitDistance*domain_yCoord);
         return new PixelCoordinate(x,y);
     }
 

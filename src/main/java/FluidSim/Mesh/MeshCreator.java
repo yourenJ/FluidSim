@@ -20,29 +20,7 @@ import java.util.List;
 
 public class MeshCreator {
 
-
-    public static Geometry doTriangulation(javafx.scene.shape.Polygon fxPolygon, double canvasX, double canvasY) {
-        Double[] holepoints=fxPolygon.getPoints().toArray(new Double[0]);
-        GeometryFactory factory = new GeometryFactory();
-        Coordinate[] holeCoords = new Coordinate[holepoints.length/2+1];
-        for(int i =0; i<holepoints.length/2; i++){
-            holeCoords[i]= new Coordinate(holepoints[2*i],holepoints[2*i+1]);
-        }
-        holeCoords[holepoints.length/2] = holeCoords[0];
-        LinearRing[] hole = new LinearRing[]{new LinearRing(factory.getCoordinateSequenceFactory().create(holeCoords), factory)};
-
-        Coordinate[] shellCoords= new Coordinate[]{new Coordinate(0, 0), new Coordinate(canvasX, 0), new Coordinate(canvasX, canvasY),
-                new Coordinate(0, canvasY), new Coordinate(0, 0)};
-
-        LinearRing shell = new LinearRing(factory.getCoordinateSequenceFactory().create(shellCoords), factory);
-        Polygon polygon = new Polygon(shell, hole, factory);
-
-        ConformingDelaunayTriangulationBuilder cdtb= new ConformingDelaunayTriangulationBuilder();
-        cdtb.setConstraints(polygon);
-        cdtb.setSites(polygon);
-        return cdtb.getTriangles(factory);
-    }
-    public static Geometry doTriangulator(javafx.scene.shape.Polygon fxPolygon, PolygonDistanceField probDensFunc, double canvasX, double canvasY){
+    public static ConformingDelaunayTriangulator doTriangulator(javafx.scene.shape.Polygon fxPolygon, PolygonDistanceField probDensFunc, double canvasX, double canvasY){
 
         ObservableList<Double> holepoints=fxPolygon.getPoints();  //list x1, y1, x2, y2, x3, y3...
 
@@ -83,14 +61,47 @@ public class MeshCreator {
         cdt.setConstraints(allSegs, allSegVerts);
         cdt.formInitialDelaunay();
         cdt.enforceConstraints();
-        //for(int i=0; i<2;i++) {cdt=chews(cdt, allSegs, allSegVerts, factory, canvasX, canvasY, 1);
-            //cdt.setConstraints(allSegs, allSegVerts);
-            //cdt.formInitialDelaunay();
-            //cdt.enforceConstraints();}
 
+        return cdt;
+    }
 
+    public static  Constraints createConstrainSegmentsAndVertices(javafx.scene.shape.Polygon fxPolygon, double canvasX, double canvasY) {
+        ObservableList<Double> holepoints=fxPolygon.getPoints();  //list x1, y1, x2, y2, x3, y3...
 
-        return cdt.getSubdivision().getTriangles(factory);
+        ArrayList<Coordinate> holeCoords = new ArrayList<>(holepoints.size()/2);
+        for(int i =0; i<holepoints.size()/2; i++){
+            holeCoords.add(i, new Coordinate(holepoints.get(2*i),holepoints.get(2*i+1)));
+        }
+        ArrayList<Segment> holeSegs = new ArrayList<>(holeCoords.size());
+        for(int i =0; i<holeCoords.size()-1; i++){
+            holeSegs.add(i, new Segment(holeCoords.get(i),holeCoords.get(i+1)));
+        }
+        holeSegs.add(holeCoords.size()-1, new Segment(holeCoords.get(holeCoords.size()-1),holeCoords.get(0)));
+
+        ArrayList<Coordinate> shellCoords= new ArrayList<Coordinate>(Arrays.asList(new Coordinate(0, 0), new Coordinate(canvasX, 0),
+                new Coordinate(canvasX, canvasY), new Coordinate(0, canvasY)));
+        ArrayList<Segment> shellSegs = new ArrayList<>(shellCoords.size());
+        for(int i =0; i<shellCoords.size()-1; i++){
+            shellSegs.add(i, new Segment(shellCoords.get(i),shellCoords.get(i+1)));
+        }
+        shellSegs.add(shellCoords.size()-1, new Segment(shellCoords.get(shellCoords.size()-1),shellCoords.get(0)));
+
+        ArrayList<ConstraintVertex> shellSegVerts = new ArrayList<>(shellCoords.size());
+        for(int i =0; i<shellCoords.size(); i++){
+            shellSegVerts.add(i, new ConstraintVertex(shellCoords.get(i)));
+        }
+        ArrayList<ConstraintVertex> holeSegVerts = new ArrayList<>(holeCoords.size());
+        for(int i=0; i<holeCoords.size(); i++){
+            holeSegVerts.add(i, new ConstraintVertex(holeCoords.get(i)));
+        }
+        ArrayList<ConstraintVertex> allSegVerts = new ArrayList<>(shellSegVerts); allSegVerts.addAll(holeSegVerts);
+
+        ArrayList<Segment> allSegs = new ArrayList<>(shellSegs); allSegs.addAll(holeSegs);
+
+        Constraints constraints = new Constraints();
+        constraints.allSegs = allSegs;
+        constraints.allSegVerts = allSegVerts;
+        return constraints;
     }
 
     public static javafx.scene.shape.Polygon JTSPolyToFXPoly(Geometry polygon){
@@ -108,13 +119,13 @@ public class MeshCreator {
 
     public static ConformingDelaunayTriangulator chews(ConformingDelaunayTriangulator cdt, ArrayList<Segment> allSegs,
                              ArrayList<ConstraintVertex> allSegVerts, GeometryFactory factory,
-                             double canvasX, double canvasY, double angularThreshold){
+                             double canvasX, double canvasY, double angularThreshold) {
         double a = angularThreshold;
         //cdt.setConstraints(allSegs, allSegVerts);
         //cdt.formInitialDelaunay();
         //cdt.enforceConstraints();
         double x;
-        QuadEdgeSubdivision tris =  cdt.getSubdivision();
+        QuadEdgeSubdivision tris = cdt.getSubdivision();
         /*List<QuadEdge[]> triVerts= tris.getTriangleEdges(false);
         for(QuadEdge[] i: triVerts ){
             x =i[0].orig().circumRadiusRatio(i[1].orig(),i[2].orig());
@@ -134,22 +145,22 @@ public class MeshCreator {
         }*/
         //LineSegment l0 = new LineSegment(); LineSegment l1 = new LineSegment(); LineSegment l2 = new LineSegment();
         ArrayList<ConstraintVertex> newVerts = new ArrayList<>();
-        List<Vertex[]> triVerts= tris.getTriangleVertices(false);
-        for(Vertex[] i: triVerts ){
+        List<Vertex[]> triVerts = tris.getTriangleVertices(false);
+        for (Vertex[] i : triVerts) {
             //l0.setCoordinates(i[0].getCoordinate(), i[1].getCoordinate());
             //l1.setCoordinates(i[1].getCoordinate(), i[2].getCoordinate());
             //l2.setCoordinates(i[2].getCoordinate(), i[0].getCoordinate());
             //x =i[0].circumRadiusRatio(i[1],i[2]);
 
-            if (i[0].circumRadiusRatio(i[1],i[2])>1) {
-                Coordinate Coord = i[0].circleCenter(i[1],i[2]).getCoordinate();
-                double X = i[0].circleCenter(i[1],i[2]).getCoordinate().getX();
-                double Y = i[0].circleCenter(i[1],i[2]).getCoordinate().getY();
-                if(X>0 && X<canvasX){
-                    if(Y<0){
+            if (i[0].circumRadiusRatio(i[1], i[2]) > 1) {
+                Coordinate Coord = i[0].circleCenter(i[1], i[2]).getCoordinate();
+                double X = i[0].circleCenter(i[1], i[2]).getCoordinate().getX();
+                double Y = i[0].circleCenter(i[1], i[2]).getCoordinate().getY();
+                if (X > 0 && X < canvasX) {
+                    if (Y < 0) {
                         Coord.setY(0);
                         newVerts.add(new ConstraintVertex(Coord));
-                    }else {
+                    } else {
                         if (Y > canvasY) {
                             Coord.setY(canvasY);
                             newVerts.add(new ConstraintVertex(Coord));
@@ -157,12 +168,12 @@ public class MeshCreator {
                             newVerts.add(new ConstraintVertex(Coord));
                         }
                     }
-                }else{
-                    if(Y>0 && Y<canvasY){
-                        if(X<0){
+                } else {
+                    if (Y > 0 && Y < canvasY) {
+                        if (X < 0) {
                             Coord.setX(0);
                             newVerts.add(new ConstraintVertex(Coord));
-                        }else {
+                        } else {
                             if (X > canvasX) {
                                 Coord.setX(canvasX);
                                 newVerts.add(new ConstraintVertex(Coord));
@@ -195,8 +206,7 @@ public class MeshCreator {
             }
         }
         newVerts.addAll(cdt.getInitialVertices());
-        return new ConformingDelaunayTriangulator(newVerts,1);
-
-
+        return new ConformingDelaunayTriangulator(newVerts, 1);
     }
+
 }

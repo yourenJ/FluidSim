@@ -23,6 +23,26 @@ public class MainFrame extends Application {
         Pane centralDisplayPane= new Pane();
         centralDisplayPane.setMinSize(800, 600);
 
+        /*set up main display area*/
+        Group centralDisplayContainer = new Group();
+        Group meshContainer = new Group();
+
+        DraggablePolygon draggablePolygon = new DraggablePolygon(800, 600, 340.0, 290.0, 290.0, 20.0, 180.0, 270.0, 120.0, 290.0);
+        draggablePolygon.setAutoMesh(true);
+        draggablePolygon.setMeshContainer(meshContainer);
+        //draggablePolygon.renderMesh();
+
+        centralDisplayContainer.getChildren().add(draggablePolygon.getPolygon());
+        centralDisplayContainer.getChildren().addAll(draggablePolygon.getAnchorList());
+        centralDisplayContainer.getChildren().add(meshContainer);
+
+        meshContainer.toBack();
+
+        centralDisplayPane.getChildren().add(centralDisplayContainer);
+        centralDisplayPane.toBack();
+        mainLayoutPane.setCenter(centralDisplayPane);
+        /**/
+
         /*set up top menu*/
         HBox topMenu= new HBox(1);
         Button topMenuGenerateMeshButton= new Button("Gen Mesh");
@@ -32,26 +52,8 @@ public class MainFrame extends Application {
         topMenuButtonB.setTranslateX(5);
         topMenuButtonB.setTranslateY(5);
         topMenu.getChildren().addAll(topMenuGenerateMeshButton, topMenuButtonB);
+        topMenu.toFront();
         mainLayoutPane.setTop(topMenu);
-        /**/
-
-        /*set up main display area*/
-        Group centralDisplayContainer = new Group();
-        Group meshContainer = new Group();
-
-        DraggablePolygon draggablePolygon = new DraggablePolygon(800, 600, 340.0, 290.0, 290.0, 20.0, 180.0, 270.0, 120.0, 290.0);
-        draggablePolygon.setAutoMesh(true);
-        draggablePolygon.setMeshContainer(meshContainer);
-        draggablePolygon.renderMesh();
-
-        centralDisplayContainer.getChildren().add(draggablePolygon.getPolygon());
-        centralDisplayContainer.getChildren().addAll(draggablePolygon.getAnchorList());
-        centralDisplayContainer.getChildren().add(meshContainer);
-
-        meshContainer.toBack();
-
-        centralDisplayPane.getChildren().add(centralDisplayContainer);
-        mainLayoutPane.setCenter(centralDisplayPane);
         /**/
 
         /*Assign button functionality*/

@@ -17,7 +17,7 @@ public class PolygonDistanceField extends PixelSampledFunction{
         domainBounds= new DomainCoordinate(domainWidth,domainHeight);
         this.polygon= polygon;
         this.pixelsPerUnitDistance= pixelsPerUnitDistance;
-        image= new BufferedImage(getPixelWidth(), getPixelHeight(), BufferedImage.TYPE_BYTE_BINARY);
+        image = new BufferedImage(getPixelWidth()+1, getPixelHeight()+1, BufferedImage.TYPE_BYTE_BINARY);
         Graphics2D graphics2D = image.createGraphics();
         graphics2D.setBackground(Color.WHITE);
         graphics2D.clearRect(0, 0 , image.getWidth(),image.getHeight());
@@ -32,8 +32,8 @@ public class PolygonDistanceField extends PixelSampledFunction{
         //Image1DDoubleArray E = Dithering.doFloydSteinbergDithering(C);
         int[] F = DoubleStream.of(C.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
 
-        image= new BufferedImage(getPixelWidth(), getPixelHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        image.getRaster().setPixels(0, 0, getPixelWidth(), getPixelHeight(), F);
+        image= new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        image.getRaster().setPixels(0, 0, getPixelWidth()+1, getPixelHeight()+1, F);
     }
 
     public BufferedImage getImage() {
