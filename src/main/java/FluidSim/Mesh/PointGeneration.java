@@ -10,7 +10,6 @@ import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.Segment;
 
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.DoubleUnaryOperator;
