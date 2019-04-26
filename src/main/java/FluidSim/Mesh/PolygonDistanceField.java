@@ -13,27 +13,26 @@ public class PolygonDistanceField extends PixelSampledFunction{
 
     public PolygonDistanceField(double domainWidth, double domainHeight, double pixelsPerUnitDistance, Polygon polygon){ /**TODO: big cleanup*/
         super(domainWidth, domainHeight, pixelsPerUnitDistance);
-
-        domainBounds= new DomainCoordinate(domainWidth,domainHeight);
+        this.domainBounds= new DomainCoordinate(domainWidth,domainHeight);
         this.polygon= polygon;
         this.pixelsPerUnitDistance= pixelsPerUnitDistance;
-        image = new BufferedImage(getPixelWidth()+1, getPixelHeight()+1, BufferedImage.TYPE_BYTE_BINARY);
-        Graphics2D graphics2D = image.createGraphics();
-        graphics2D.setBackground(Color.WHITE);
-        graphics2D.clearRect(0, 0 , image.getWidth(),image.getHeight());
-        graphics2D.setColor(Color.BLACK);
-        graphics2D.fill(JFXPolyToAWTPoly(polygon));
-        double[] A = IntStream.of(image.getData().getPixels(0, 0,image.getWidth(),image.getHeight(), new int[image.getWidth()*image.getHeight()])).mapToDouble(d -> (double) d*Double.MAX_VALUE).toArray();
-        Image1DDoubleArray B = new Image1DDoubleArray(A, image.getWidth(), image.getHeight());
-        Image1DDoubleArray B2 = distanceTransform2D(B);
-        double max = B2.getMaxPixelValue();
-        functionAsPixelSamples = new Image1DDoubleArray(DoubleStream.of(B2.rawImageArray).map(d -> d==0? max+1 : d).toArray(), image.getWidth(), image.getHeight());
-        Image1DDoubleArray C = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(d -> Math.round(255*d/max)).toArray(), image.getWidth(), image.getHeight());
-        //Image1DDoubleArray E = Dithering.doFloydSteinbergDithering(C);
-        int[] F = DoubleStream.of(C.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
+        BufferedImage workingImage = new BufferedImage(getPixelWidth()+1, getPixelHeight()+1, BufferedImage.TYPE_BYTE_BINARY);
 
-        image= new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        image.getRaster().setPixels(0, 0, getPixelWidth()+1, getPixelHeight()+1, F);
+        Graphics2D imageEditor = workingImage.createGraphics();
+        imageEditor.setBackground(Color.WHITE);
+        imageEditor.clearRect(0, 0 , workingImage.getWidth(),workingImage.getHeight());
+        imageEditor.setColor(Color.BLACK);
+        imageEditor.fill(JFXPolyToAWTPoly(polygon));
+
+        double[] WorkingImageAsRawDouble = IntStream.of(workingImage.getData().getPixels(0, 0,workingImage.getWidth(),workingImage.getHeight(), new int[workingImage.getWidth()*workingImage.getHeight()])).mapToDouble(d -> (double) d*Double.MAX_VALUE).toArray();
+        Image1DDoubleArray workingImageDistanceTransform = distanceTransform2D(new Image1DDoubleArray(WorkingImageAsRawDouble, workingImage.getWidth(), workingImage.getHeight()));
+        double maxPixelValue = workingImageDistanceTransform.getMaxPixelValue();
+        this.functionAsPixelSamples = new Image1DDoubleArray(DoubleStream.of(workingImageDistanceTransform.rawImageArray).map(d -> d==0? maxPixelValue+1 : d).toArray(), workingImage.getWidth(), workingImage.getHeight());
+        Image1DDoubleArray distanceTransformRemapped = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(d -> Math.round(255*d/maxPixelValue)).toArray(), workingImage.getWidth(), workingImage.getHeight());
+        int[] distanceTransformAsInt = DoubleStream.of(distanceTransformRemapped.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
+
+        this.image= new BufferedImage(workingImage.getWidth(), workingImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        this.image.getRaster().setPixels(0, 0, getPixelWidth()+1, getPixelHeight()+1, distanceTransformAsInt);
     }
 
     public BufferedImage getImage() {

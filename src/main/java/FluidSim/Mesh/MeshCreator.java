@@ -4,17 +4,14 @@ import javafx.collections.ObservableList;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.triangulate.ConformingDelaunayTriangulationBuilder;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.Segment;
-import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -22,43 +19,11 @@ public class MeshCreator {
 
     public static ConformingDelaunayTriangulator doTriangulator(javafx.scene.shape.Polygon fxPolygon, PolygonDistanceField probDensFunc, double canvasX, double canvasY){
 
-        ObservableList<Double> holepoints=fxPolygon.getPoints();  //list x1, y1, x2, y2, x3, y3...
-
-        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.AcceptanceRejectionMethod(probDensFunc, 2000);
-
-        ArrayList<Coordinate> holeCoords = new ArrayList<>(holepoints.size()/2);
-        for(int i =0; i<holepoints.size()/2; i++){
-            holeCoords.add(i, new Coordinate(holepoints.get(2*i),holepoints.get(2*i+1)));
-        }
-        ArrayList<Segment> holeSegs = new ArrayList<>(holeCoords.size());
-        for(int i =0; i<holeCoords.size()-1; i++){
-            holeSegs.add(i, new Segment(holeCoords.get(i),holeCoords.get(i+1)));
-        }
-        holeSegs.add(holeCoords.size()-1, new Segment(holeCoords.get(holeCoords.size()-1),holeCoords.get(0)));
-
-        ArrayList<Coordinate> shellCoords= new ArrayList<Coordinate>(Arrays.asList(new Coordinate(0, 0), new Coordinate(canvasX, 0),
-                new Coordinate(canvasX, canvasY), new Coordinate(0, canvasY)));
-        ArrayList<Segment> shellSegs = new ArrayList<>(shellCoords.size());
-        for(int i =0; i<shellCoords.size()-1; i++){
-            shellSegs.add(i, new Segment(shellCoords.get(i),shellCoords.get(i+1)));
-        }
-        shellSegs.add(shellCoords.size()-1, new Segment(shellCoords.get(shellCoords.size()-1),shellCoords.get(0)));
-
-        ArrayList<ConstraintVertex> shellSegVerts = new ArrayList<>(shellCoords.size());
-        for(int i =0; i<shellCoords.size(); i++){
-            shellSegVerts.add(i, new ConstraintVertex(shellCoords.get(i)));
-        }
-        ArrayList<ConstraintVertex> holeSegVerts = new ArrayList<>(holeCoords.size());
-        for(int i=0; i<holeCoords.size(); i++){
-            holeSegVerts.add(i, new ConstraintVertex(holeCoords.get(i)));
-        }
-        ArrayList<ConstraintVertex> allSegVerts = new ArrayList<>(shellSegVerts); allSegVerts.addAll(holeSegVerts);
-
-        ArrayList<Segment> allSegs = new ArrayList<>(shellSegs); allSegs.addAll(holeSegs);
-        ArrayList<ConstraintVertex> startVerts = new ArrayList<>(); startVerts.addAll(generatedPoints);
+        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.cumulativeDistributionMethod(probDensFunc, 2000);
+        Constraints constraints = createConstrainSegmentsAndVertices(fxPolygon, canvasX, canvasY);
         GeometryFactory factory = new GeometryFactory();
-        ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(startVerts, 1);
-        cdt.setConstraints(allSegs, allSegVerts);
+        ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(generatedPoints, 1);
+        cdt.setConstraints(constraints.allSegs, constraints.allSegVerts);
         cdt.formInitialDelaunay();
         cdt.enforceConstraints();
 
@@ -117,6 +82,7 @@ public class MeshCreator {
         return fxPoly;
     }
 
+    /*old, unused:*/
     public static ConformingDelaunayTriangulator chews(ConformingDelaunayTriangulator cdt, ArrayList<Segment> allSegs,
                              ArrayList<ConstraintVertex> allSegVerts, GeometryFactory factory,
                              double canvasX, double canvasY, double angularThreshold) {

@@ -4,14 +4,16 @@ package FluidSim.Mesh;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.DoubleStream;
 
+
+/** this is unused*/
 public class Dithering {
 
     public static Image1DDoubleArray doFloydSteinbergDithering(Image1DDoubleArray inputImage){
 
-        DoubleUnaryOperator inputModulation = d -> 127; //Math.round(251/(0.01*Math.pow(d, 0.8) + 1) + 4); /*TODO: dithering should not be responsible for this.*/
+        DoubleUnaryOperator inputModulation = d -> Math.round(251/(0.01*Math.pow(d, 0.8) + 1) + 4); /*TODO: dithering should not be responsible for this.*/
 
         Image1DDoubleArray outputImage = new Image1DDoubleArray(DoubleStream.of(inputImage.rawImageArray).map(inputModulation).toArray(), inputImage.width, inputImage.height);
-        double maxPixel = 255.;//*outputImage.getMaxPixelValue();
+        double maxPixel = outputImage.getMaxPixelValue();
         double A = 1.;
 
         for(int y=0; y<inputImage.height; y++){

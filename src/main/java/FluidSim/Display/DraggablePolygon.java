@@ -81,14 +81,6 @@ public class DraggablePolygon {
         return anchorList;
     }
 
-    /* Unused: public org.poly2tri.geometry.polygon.Polygon getTriangulatablePolygon() {
-        List<org.poly2tri.geometry.polygon.PolygonPoint> points = new ArrayList<>(polygon.getPoints().size()/2);
-        for (int i=0; i< polygon.getPoints().size(); i+=2) {
-            points.add(new org.poly2tri.geometry.polygon.PolygonPoint(polygon.getPoints().get(i), polygon.getPoints().get(i+1)));
-        }
-        return new org.poly2tri.geometry.polygon.Polygon(points);
-    }*/
-
     private void setPolygonProperties() {
         polygon.setStroke(Color.FORESTGREEN);
         polygon.setStrokeWidth(4);
@@ -205,7 +197,7 @@ public class DraggablePolygon {
                     if (newY > 0 && newY < getScene().getHeight()) {
                         setCenterY(newY);
                     }
-                    //renderMesh();
+
                 }
             });
             setOnMouseEntered(new EventHandler<MouseEvent>() {

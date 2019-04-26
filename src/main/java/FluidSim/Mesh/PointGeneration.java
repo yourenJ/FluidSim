@@ -17,29 +17,8 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.stream.DoubleStream;
 
 public class PointGeneration {
-    public static ArrayList<ConstraintVertex> AcceptanceRejectionMethod2(PixelSampledFunction probabilityDensityFunction){
-        Image1DDoubleArray functionAsPixelSamples = probabilityDensityFunction.functionAsPixelSamples;
-        double maxValue = functionAsPixelSamples.getMaxPixelValue();
-        DoubleUnaryOperator inputModulation = d -> 1./(0.1*Math.pow(d, 2.) + 1.) + 0.01; /*TODO: dithering should not be responsible for this?.*/
-        Image1DDoubleArray probDensFuncArray = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(inputModulation).toArray(),functionAsPixelSamples.width, functionAsPixelSamples.height);
 
-        ArrayList<ConstraintVertex> generatedPoints = new ArrayList<>();
-
-        while(generatedPoints.size()<20000){
-            double randomXCoord = probabilityDensityFunction.getDomainBounds().domain_xCoord*Math.random();
-            double randomYCoord = probabilityDensityFunction.getDomainBounds().domain_yCoord*Math.random();
-            int randomXPixel = probabilityDensityFunction.domainToPixelCoord(randomXCoord);
-            int randomYPixel = probabilityDensityFunction.domainToPixelCoord(randomYCoord);
-            double acceptanceChance = Math.random();
-            if(acceptanceChance>probDensFuncArray.getPixel(randomXPixel,randomYPixel)){
-                generatedPoints.add(new ConstraintVertex( new Coordinate(randomXCoord, randomYCoord)));
-            }
-        }
-
-        return generatedPoints;
-    }
-
-    public static ArrayList<ConstraintVertex> AcceptanceRejectionMethod(PixelSampledFunction probabilityDensityFunction, int numberOfPoints){
+    public static ArrayList<ConstraintVertex> cumulativeDistributionMethod(PixelSampledFunction probabilityDensityFunction, int numberOfPoints){
         Image1DDoubleArray functionAsPixelSamples = probabilityDensityFunction.functionAsPixelSamples;
         double maxValue = functionAsPixelSamples.getMaxPixelValue();
         DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.5 + 3000/(d+500);//Math.pow(Math.pow(maxValue, 1./2.) - Math.pow(d, 1./2.),4) + 1; /*TODO: dithering should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
@@ -98,17 +77,15 @@ public class PointGeneration {
     public static ConformingDelaunayTriangulator lloydRelaxation(ConformingDelaunayTriangulator cdt, javafx.scene.shape.Polygon fxPolygon, double canvasX, double canvasY, PixelSampledFunction probabilityDensityFunction){
         Image1DDoubleArray functionAsPixelSamples = probabilityDensityFunction.functionAsPixelSamples;
         double maxValue = functionAsPixelSamples.getMaxPixelValue();
-        DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.5 + 3000/(d+500);//Math.pow(Math.pow(maxValue, 1./2.) - Math.pow(d, 1./2.),4) + 1; /*TODO: dithering should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
+        DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.5 + 3000/(d+500); /*TODO: lloydRelaxation should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
         Image1DDoubleArray probDensFuncArray = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(inputModulation).toArray(),functionAsPixelSamples.width, functionAsPixelSamples.height);
         Constraints constraints = MeshCreator.createConstrainSegmentsAndVertices(fxPolygon, canvasX, canvasY);
-        Image1DDoubleArray cumulativeDistribFuncArray = cumulativeDistributionFunction(probDensFuncArray);
 
-        GeometryFactory factory = new GeometryFactory();
+        GeometryFactory genericFactory = new GeometryFactory();
 
         ArrayList<ConstraintVertex> startVerts = new ArrayList<>();
-
-
-        java.util.List polyList = cdt.getSubdivision().getVoronoiCellPolygons(factory);
+        
+        java.util.List polyList = cdt.getSubdivision().getVoronoiCellPolygons(genericFactory);
 
         for(int i = 0; i<polyList.size(); i++) {
 

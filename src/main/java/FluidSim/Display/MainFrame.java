@@ -30,7 +30,6 @@ public class MainFrame extends Application {
         DraggablePolygon draggablePolygon = new DraggablePolygon(800, 600, 340.0, 290.0, 290.0, 20.0, 180.0, 270.0, 120.0, 290.0);
         draggablePolygon.setAutoMesh(true);
         draggablePolygon.setMeshContainer(meshContainer);
-        //draggablePolygon.renderMesh();
 
         centralDisplayContainer.getChildren().add(draggablePolygon.getPolygon());
         centralDisplayContainer.getChildren().addAll(draggablePolygon.getAnchorList());
