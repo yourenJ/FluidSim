@@ -3,7 +3,7 @@ package FluidSim.Mesh;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FluidVertex {
+public class FluidVertex extends Object {
     private double positionX;
     private double positionY;
     /*Fluid state variables here:*/

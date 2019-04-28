@@ -21,9 +21,12 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeType;
 import javafx.embed.swing.SwingFXUtils;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 
+import java.util.ArrayList;
 
 
 /**  a polygon with draggable corners and the option to create and render a Delaunay triangulation mesh
@@ -104,6 +107,7 @@ public class DraggablePolygon {
     }
 
     public void renderMesh() { /**TODO: cleanup*/
+
         if(this.autoMesh && this.meshContainer!=null) {
             if (!this.meshContainer.getChildren().isEmpty()) {
                 this.meshContainer.getChildren().clear();
@@ -115,11 +119,15 @@ public class DraggablePolygon {
             //this.meshContainer.getChildren().add(imageView);
             GeometryFactory factory = new GeometryFactory();
             tris = MeshCreator.doTriangulator(getPolygon(), pdf, canvasWidth, canvasHeight);
-            for(int i = 0; i<5; i++ ) {
-                tris = PointGeneration.lloydRelaxation(tris, getPolygon(), canvasWidth, canvasHeight, pdf);
+            for(int i = 0; i<10; i++ ) {
+                tris = PointGeneration.lloydRelaxation(tris, getPolygon(), canvasWidth, canvasHeight, pdf); /*TODO: Bug: adds new vertices*/
             }
-            for (int i = 0; i < tris.getSubdivision().getVoronoiDiagram(factory).getNumGeometries(); i++) {
-                this.meshContainer.getChildren().add(MeshCreator.JTSPolyToFXPoly(tris.getSubdivision().getVoronoiDiagram(factory).getGeometryN(i)));
+
+            ArrayList triedges = (ArrayList) tris.getSubdivision().getEdges();
+
+            for (int i = 0; i < triedges.size(); i++) {
+                QuadEdge edge = (QuadEdge) triedges.get(i);
+                this.meshContainer.getChildren().add(MeshCreator.convertJTSQuadEdgeToFXLine(edge));
             }
             this.meshContainer.toBack();
         }

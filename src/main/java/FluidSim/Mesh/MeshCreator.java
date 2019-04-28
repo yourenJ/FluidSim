@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.Segment;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
@@ -19,7 +20,7 @@ public class MeshCreator {
 
     public static ConformingDelaunayTriangulator doTriangulator(javafx.scene.shape.Polygon fxPolygon, PolygonDistanceField probDensFunc, double canvasX, double canvasY){
 
-        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.cumulativeDistributionMethod(probDensFunc, 2000);
+        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.cumulativeDistributionMethod(probDensFunc, 1000);
         Constraints constraints = createConstrainSegmentsAndVertices(fxPolygon, canvasX, canvasY);
         GeometryFactory factory = new GeometryFactory();
         ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(generatedPoints, 1);
@@ -69,7 +70,7 @@ public class MeshCreator {
         return constraints;
     }
 
-    public static javafx.scene.shape.Polygon JTSPolyToFXPoly(Geometry polygon){
+    public static javafx.scene.shape.Polygon convertJTSPolyToFXPoly(Geometry polygon){
         Coordinate[] polyCoords=polygon.getCoordinates();
         javafx.scene.shape.Polygon fxPoly = new javafx.scene.shape.Polygon();
         for(Coordinate i : polyCoords) {
@@ -77,9 +78,15 @@ public class MeshCreator {
         }
         fxPoly.setFill(Color.BLACK.deriveColor(0, 1.2, 1, 0.2));
         fxPoly.setStroke(Color.FORESTGREEN);
-        fxPoly.setStrokeWidth(1);
+        fxPoly.setStrokeWidth(0.3);
         fxPoly.setStrokeLineCap(StrokeLineCap.ROUND);
         return fxPoly;
+    }
+
+    public static javafx.scene.shape.Line convertJTSQuadEdgeToFXLine(QuadEdge quadEdge){
+        Coordinate start = quadEdge.orig().getCoordinate();
+        Coordinate end = quadEdge.dest().getCoordinate();
+        return new javafx.scene.shape.Line(start.x, start.y, end.x, end.y);
     }
 
     /*old, unused:*/
