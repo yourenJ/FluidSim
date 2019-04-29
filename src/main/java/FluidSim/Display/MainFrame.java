@@ -1,17 +1,14 @@
 package FluidSim.Display;
 
-import FluidSim.Mesh.MeshCreator;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import org.locationtech.jts.geom.Geometry;
 
 
 public class MainFrame extends Application {
@@ -44,19 +41,24 @@ public class MainFrame extends Application {
 
         /*set up top menu*/
         HBox topMenu= new HBox(1);
-        Button topMenuGenerateMeshButton= new Button("Gen Mesh");
+        Button topMenuGenerateMeshButton= new Button("Generate Mesh");
         topMenuGenerateMeshButton.setTranslateX(5);
         topMenuGenerateMeshButton.setTranslateY(5);
-        Button topMenuButtonB= new Button("null");
-        topMenuButtonB.setTranslateX(5);
-        topMenuButtonB.setTranslateY(5);
-        topMenu.getChildren().addAll(topMenuGenerateMeshButton, topMenuButtonB);
+        Button topMenuRelaxMeshButton= new Button("Relax Mesh");
+        topMenuRelaxMeshButton.setTranslateX(5);
+        topMenuRelaxMeshButton.setTranslateY(5);
+        topMenu.getChildren().addAll(topMenuGenerateMeshButton, topMenuRelaxMeshButton);
         topMenu.toFront();
         mainLayoutPane.setTop(topMenu);
         /**/
 
         /*Assign button functionality*/
         topMenuGenerateMeshButton.setOnAction(event -> {
+            draggablePolygon.createInitialMesh();
+            draggablePolygon.renderMesh();
+        });
+        topMenuRelaxMeshButton.setOnAction(event -> {
+            draggablePolygon.relaxMesh();
             draggablePolygon.renderMesh();
         });
         /**/

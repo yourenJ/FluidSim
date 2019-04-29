@@ -1,5 +1,6 @@
 package FluidSim.Display;
 
+import FluidSim.Mesh.Constraints;
 import FluidSim.Mesh.MeshCreator;
 import FluidSim.Mesh.PointGeneration;
 import FluidSim.Mesh.PolygonDistanceField;
@@ -16,13 +17,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Polygon;
-import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.shape.StrokeType;
+import javafx.scene.shape.*;
 import javafx.embed.swing.SwingFXUtils;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 
@@ -45,6 +41,8 @@ public class DraggablePolygon {
     private double canvasWidth;
     private double canvasHeight;
     ConformingDelaunayTriangulator tris;
+    Constraints meshConstraints;
+    PolygonDistanceField probDensFunc;
 
     public void setCanvasSize(double width, double height){
         canvasHeight=height; canvasWidth=width;
@@ -106,23 +104,37 @@ public class DraggablePolygon {
         createControlAnchors();
     }
 
-    public void renderMesh() { /**TODO: cleanup*/
-
-        if(this.autoMesh && this.meshContainer!=null) {
+    public void createInitialMesh() { /**TODO: cleanup*/
+        if(this.meshContainer!=null) {
             if (!this.meshContainer.getChildren().isEmpty()) {
                 this.meshContainer.getChildren().clear();
             }
-            PolygonDistanceField pdf = new PolygonDistanceField(canvasWidth, canvasHeight,2 , getPolygon()); /**TODO: put in own method*/
-            Image image1 = SwingFXUtils.toFXImage(pdf.getImage(), null);
+            probDensFunc = new PolygonDistanceField(canvasWidth, canvasHeight,2 , getPolygon()); /**TODO: put in own method*/
+
+            Image image1 = SwingFXUtils.toFXImage(probDensFunc.getImage(), null);
             ImageView imageView = new ImageView(image1);
             imageView.setFitHeight(600); imageView.setFitWidth(800); /**TODO:width,height*/
             //this.meshContainer.getChildren().add(imageView);
-            GeometryFactory factory = new GeometryFactory();
-            tris = MeshCreator.doTriangulator(getPolygon(), pdf, canvasWidth, canvasHeight);
-            for(int i = 0; i<10; i++ ) {
-                tris = PointGeneration.lloydRelaxation(tris, getPolygon(), canvasWidth, canvasHeight, pdf); /*TODO: Bug: adds new vertices*/
-            }
 
+            meshConstraints = MeshCreator.createConstraintSegmentsAndVertices(polygon, canvasWidth, canvasHeight);
+            tris = MeshCreator.doTriangulation(meshConstraints, probDensFunc, canvasWidth, canvasHeight);
+
+        }
+    }
+
+    public void relaxMesh() {
+        if(this.meshContainer!=null && tris!=null) {
+            if (!this.meshContainer.getChildren().isEmpty()) {
+                this.meshContainer.getChildren().clear();
+            }
+            for (int i = 0; i < 1; i++) {
+                tris = PointGeneration.lloydRelaxation(tris, meshConstraints, canvasWidth, canvasHeight, probDensFunc);
+            }
+        }
+    }
+
+    public void renderMesh() {
+        if(this.meshContainer!=null && tris!=null) {
             ArrayList triedges = (ArrayList) tris.getSubdivision().getEdges();
 
             for (int i = 0; i < triedges.size(); i++) {

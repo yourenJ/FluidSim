@@ -3,15 +3,13 @@ package FluidSim.Mesh;
 
 
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
-import org.locationtech.jts.triangulate.Segment;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.DoubleStream;
 
@@ -73,12 +71,13 @@ public class PointGeneration {
         return middle;
     }
 
-    public static ConformingDelaunayTriangulator lloydRelaxation(ConformingDelaunayTriangulator cdt, javafx.scene.shape.Polygon fxPolygon, double canvasX, double canvasY, PixelSampledFunction probabilityDensityFunction){
+    public static ConformingDelaunayTriangulator lloydRelaxation(ConformingDelaunayTriangulator cdt, Constraints constraints, double canvasX, double canvasY, PixelSampledFunction probabilityDensityFunction){
+
         Image1DDoubleArray functionAsPixelSamples = probabilityDensityFunction.functionAsPixelSamples;
         double maxValue = functionAsPixelSamples.getMaxPixelValue();
         DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.5 + 3000/(d+500); /*TODO: lloydRelaxation should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
         Image1DDoubleArray probDensFuncArray = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(inputModulation).toArray(),functionAsPixelSamples.width, functionAsPixelSamples.height);
-        Constraints constraints = MeshCreator.createConstrainSegmentsAndVertices(fxPolygon, canvasX, canvasY);
+
 
         GeometryFactory genericFactory = new GeometryFactory();
 
@@ -89,27 +88,30 @@ public class PointGeneration {
         for(int i = 0; i<polyList.size(); i++) {
 
             Polygon poly = (Polygon) polyList.get(i);
+            Coordinate polyCentroid = poly.getCentroid().getCoordinate();
+            if((polyCentroid.x>0 && polyCentroid.x<canvasX) && (polyCentroid.y>0 && polyCentroid.y<canvasY)) {
 
-            Coordinate[] polyCoord = poly.getCoordinates();
+                Coordinate[] polyCoord = poly.getCoordinates();
 
-            double xMoment=0;
-            double yMoment=0;
-            double totalMass=0;
+                double xMoment = 0;
+                double yMoment = 0;
+                double totalMass = 0;
 
-            for (Coordinate c : polyCoord) {
-                PixelSampledFunction.PixelCoordinate p = probabilityDensityFunction.domainToPixelCoord(probabilityDensityFunction.new DomainCoordinate(c.x, c.y));
-                double pixelMassAtCoordinate = probDensFuncArray.getPixel(p.pixel_xCoord,p.pixel_yCoord);
-                totalMass += pixelMassAtCoordinate;
-                xMoment += pixelMassAtCoordinate*c.x;
-                yMoment += pixelMassAtCoordinate*c.y;
+                for (Coordinate c : polyCoord) {
+                    PixelSampledFunction.PixelCoordinate p = probabilityDensityFunction.domainToPixelCoord(probabilityDensityFunction.new DomainCoordinate(c.x, c.y));
+                    double pixelMassAtCoordinate = probDensFuncArray.getPixel(p.pixel_xCoord, p.pixel_yCoord);
+                    totalMass += pixelMassAtCoordinate;
+                    xMoment += pixelMassAtCoordinate * c.x;
+                    yMoment += pixelMassAtCoordinate * c.y;
+                }
+                double centerOfMassX = xMoment / totalMass;
+                double centerOfMassY = yMoment / totalMass;
+                startVerts.add(new ConstraintVertex(new Coordinate(centerOfMassX, centerOfMassY)));
             }
-            double centerOfMassX = xMoment/totalMass;
-            double centerOfMassY = yMoment/totalMass;
-            startVerts.add(new ConstraintVertex(new Coordinate(centerOfMassX,centerOfMassY)));
         }
         ConformingDelaunayTriangulator cdt2= new ConformingDelaunayTriangulator(startVerts, 1);
 
-        cdt2.setConstraints(constraints.allSegs, constraints.allSegVerts);
+        cdt2.setConstraints((List) constraints.allSegs.clone(), (List) constraints.allSegVerts.clone());
         cdt2.formInitialDelaunay();
         cdt2.enforceConstraints();
 
