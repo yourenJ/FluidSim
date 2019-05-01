@@ -168,7 +168,7 @@ public class DraggablePolygon {
     }
 
     class Anchor extends Circle {
-        private final DoubleProperty x, y;
+        private final DoubleProperty x, y; //synchronises the value of two things in JFX
 
         Anchor(Color color, DoubleProperty x, DoubleProperty y) {
             super(x.get(), y.get(), 5);

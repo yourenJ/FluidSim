@@ -34,6 +34,8 @@ public class PointGeneration {
             double randomYCoord = probabilityDensityFunction.pixelToDomainCoord(chosenPixelXYCoords[1])+Math.random()-0.5;
             generatedPoints.add(new ConstraintVertex( new Coordinate(randomXCoord, randomYCoord)));
         }
+
+
         return generatedPoints;
     }
 

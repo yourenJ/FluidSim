@@ -1,0 +1,26 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="FluidSim:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/FluidSim_jar</output-path>
+    <root id="archive" name="FluidSim.jar">
+      <element id="module-output" name="FluidSim" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/13-ea+5/javafx-graphics-13-ea+5-win.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-media/13-ea+5/javafx-media-13-ea+5-mac.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/13-ea+5/javafx-graphics-13-ea+5-linux.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/13-ea+5/javafx-graphics-13-ea+5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-base/13-ea+5/javafx-base-13-ea+5-win.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/orbisgis/poly2tri-core/0.1.2/poly2tri-core-0.1.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-base/13-ea+5/javafx-base-13-ea+5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/13-ea+5/javafx-fxml-13-ea+5-win.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-media/13-ea+5/javafx-media-13-ea+5-linux.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/13-ea+5/javafx-controls-13-ea+5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.6.0/slf4j-api-1.6.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/13-ea+5/javafx-fxml-13-ea+5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/locationtech/jts/jts-core/1.16.1/jts-core-1.16.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-media/13-ea+5/javafx-media-13-ea+5-win.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/13-ea+5/javafx-controls-13-ea+5-win.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-swing/13-ea+5/javafx-swing-13-ea+5-win.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/13-ea+5/javafx-graphics-13-ea+5-mac.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/openjfx/javafx-swing/13-ea+5/javafx-swing-13-ea+5.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
