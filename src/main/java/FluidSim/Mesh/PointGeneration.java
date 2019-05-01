@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.quadedge.LocateFailureException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,7 @@ public class PointGeneration {
     public static ArrayList<ConstraintVertex> cumulativeDistributionMethod(PixelSampledFunction probabilityDensityFunction, int numberOfPoints){
         Image1DDoubleArray functionAsPixelSamples = probabilityDensityFunction.functionAsPixelSamples;
         double maxValue = functionAsPixelSamples.getMaxPixelValue();
-        DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.5 + 3000/(d+500);//Math.pow(Math.pow(maxValue, 1./2.) - Math.pow(d, 1./2.),4) + 1; /*TODO: dithering should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
+        DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.1 + 3000/(d+1500);//Math.pow(Math.pow(maxValue, 1./2.) - Math.pow(d, 1./2.),4) + 1; /*TODO: dithering should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
         Image1DDoubleArray probDensFuncArray = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(inputModulation).toArray(),functionAsPixelSamples.width, functionAsPixelSamples.height);
 
         Image1DDoubleArray cumulativeDistribFuncArray = cumulativeDistributionFunction(probDensFuncArray);
@@ -75,7 +76,7 @@ public class PointGeneration {
 
         Image1DDoubleArray functionAsPixelSamples = probabilityDensityFunction.functionAsPixelSamples;
         double maxValue = functionAsPixelSamples.getMaxPixelValue();
-        DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.5 + 3000/(d+500); /*TODO: lloydRelaxation should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
+        DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.1 + 3000/(d+1500); /*TODO: lloydRelaxation should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
         Image1DDoubleArray probDensFuncArray = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(inputModulation).toArray(),functionAsPixelSamples.width, functionAsPixelSamples.height);
 
 
@@ -109,11 +110,18 @@ public class PointGeneration {
                 startVerts.add(new ConstraintVertex(new Coordinate(centerOfMassX, centerOfMassY)));
             }
         }
-        ConformingDelaunayTriangulator cdt2= new ConformingDelaunayTriangulator(startVerts, 1);
+        ConformingDelaunayTriangulator cdt2= new ConformingDelaunayTriangulator(startVerts, 2);
 
         cdt2.setConstraints((List) constraints.allSegs.clone(), (List) constraints.allSegVerts.clone());
-        cdt2.formInitialDelaunay();
+        try {
+            cdt2.formInitialDelaunay();
+        } catch (LocateFailureException e) {
+            System.out.println("Further relaxation not possible due to convergence failure");
+            return cdt;
+        }
         cdt2.enforceConstraints();
+
+        System.out.println("Number of mesh vertices: " + startVerts.size());
 
         return cdt2;
 

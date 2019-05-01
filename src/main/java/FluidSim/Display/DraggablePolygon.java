@@ -104,45 +104,43 @@ public class DraggablePolygon {
         createControlAnchors();
     }
 
-    public void createInitialMesh() { /**TODO: cleanup*/
-        if(this.meshContainer!=null) {
-            if (!this.meshContainer.getChildren().isEmpty()) {
-                this.meshContainer.getChildren().clear();
-            }
-            probDensFunc = new PolygonDistanceField(canvasWidth, canvasHeight,2 , getPolygon()); /**TODO: put in own method*/
+    public void createInitialMesh() {
+        probDensFunc = new PolygonDistanceField(canvasWidth, canvasHeight, 2, getPolygon());
 
-            Image image1 = SwingFXUtils.toFXImage(probDensFunc.getImage(), null);
-            ImageView imageView = new ImageView(image1);
-            imageView.setFitHeight(600); imageView.setFitWidth(800); /**TODO:width,height*/
-            //this.meshContainer.getChildren().add(imageView);
+        meshConstraints = MeshCreator.createConstraintSegmentsAndVertices(polygon, canvasWidth, canvasHeight);
+        tris = MeshCreator.doTriangulation(meshConstraints, probDensFunc, canvasWidth, canvasHeight);
 
-            meshConstraints = MeshCreator.createConstraintSegmentsAndVertices(polygon, canvasWidth, canvasHeight);
-            tris = MeshCreator.doTriangulation(meshConstraints, probDensFunc, canvasWidth, canvasHeight);
 
-        }
     }
 
     public void relaxMesh() {
-        if(this.meshContainer!=null && tris!=null) {
-            if (!this.meshContainer.getChildren().isEmpty()) {
-                this.meshContainer.getChildren().clear();
-            }
-            for (int i = 0; i < 1; i++) {
-                tris = PointGeneration.lloydRelaxation(tris, meshConstraints, canvasWidth, canvasHeight, probDensFunc);
-            }
+        for (int i = 0; i < 1; i++) {
+            tris = PointGeneration.lloydRelaxation(tris, meshConstraints, canvasWidth, canvasHeight, probDensFunc);
         }
+
     }
 
     public void renderMesh() {
         if(this.meshContainer!=null && tris!=null) {
+            if (!this.meshContainer.getChildren().isEmpty()) {
+                this.meshContainer.getChildren().clear();
+            }
+
             ArrayList triedges = (ArrayList) tris.getSubdivision().getEdges();
 
             for (int i = 0; i < triedges.size(); i++) {
                 QuadEdge edge = (QuadEdge) triedges.get(i);
                 this.meshContainer.getChildren().add(MeshCreator.convertJTSQuadEdgeToFXLine(edge));
             }
-            this.meshContainer.toBack();
+            //this.meshContainer.toBack();
         }
+    }
+
+    public ImageView showPolygonDistanceField() {
+        Image image1 = SwingFXUtils.toFXImage(probDensFunc.getImage(), null);
+        ImageView imageView = new ImageView(image1);
+        //this.meshContainer.getChildren().add(imageView);
+        return imageView;
     }
 
     public void createControlAnchors(){

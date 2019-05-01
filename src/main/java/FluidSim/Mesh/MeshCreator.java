@@ -20,7 +20,7 @@ public class MeshCreator {
 
     public static ConformingDelaunayTriangulator doTriangulation(Constraints constraints, PolygonDistanceField probDensFunc, double canvasX, double canvasY){
         ArrayList<ConstraintVertex> generatedPoints = PointGeneration.cumulativeDistributionMethod(probDensFunc, 4000);
-        ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(generatedPoints, 1);
+        ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(generatedPoints, 2);
 
         cdt.setConstraints((List) constraints.allSegs.clone(), (List) constraints.allSegVerts.clone());
         cdt.formInitialDelaunay();

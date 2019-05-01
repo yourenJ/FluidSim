@@ -4,6 +4,10 @@ import javafx.scene.shape.Polygon;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
@@ -28,7 +32,7 @@ public class PolygonDistanceField extends PixelSampledFunction{
         Image1DDoubleArray workingImageDistanceTransform = distanceTransform2D(new Image1DDoubleArray(WorkingImageAsRawDouble, workingImage.getWidth(), workingImage.getHeight()));
         double maxPixelValue = workingImageDistanceTransform.getMaxPixelValue();
         this.functionAsPixelSamples = new Image1DDoubleArray(DoubleStream.of(workingImageDistanceTransform.rawImageArray).map(d -> d==0? maxPixelValue+1 : d).toArray(), workingImage.getWidth(), workingImage.getHeight());
-        Image1DDoubleArray distanceTransformRemapped = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(d -> Math.round(255*d/maxPixelValue)).toArray(), workingImage.getWidth(), workingImage.getHeight());
+        Image1DDoubleArray distanceTransformRemapped = new Image1DDoubleArray(DoubleStream.of(functionAsPixelSamples.rawImageArray).map(d -> Math.round(255*Math.sqrt(d/maxPixelValue))).toArray(), workingImage.getWidth(), workingImage.getHeight());
         int[] distanceTransformAsInt = DoubleStream.of(distanceTransformRemapped.rawImageArray).mapToInt(d -> (int) Math.round(d)).toArray();
 
         this.image= new BufferedImage(workingImage.getWidth(), workingImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
@@ -41,15 +45,28 @@ public class PolygonDistanceField extends PixelSampledFunction{
 
     public Image1DDoubleArray distanceTransform2D(Image1DDoubleArray func2D){
         Image1DDoubleArray distanceTransformedfunc2D = new Image1DDoubleArray(func2D.width, func2D.height);
+        ExecutorService executor = Executors.newFixedThreadPool(8);
         for ( int i = 0; i < func2D.height; i++) {
-            distanceTransformedfunc2D.setPixelRow(i, distanceTransform1D(func2D.getPixelRow(i)));
+            final int x = i;
+            executor.execute(()->distanceTransformedfunc2D.setPixelRow(x, distanceTransform1D(func2D.getPixelRow(x))));
+            //distanceTransformedfunc2D.setPixelRow(i, distanceTransform1D(func2D.getPixelRow(i)));
         }
+        executor.shutdown();
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {}
+        executor = Executors.newFixedThreadPool(8);
         for ( int i = 0; i < func2D.width; i++) {
-            distanceTransformedfunc2D.setPixelColumn(i, distanceTransform1D(distanceTransformedfunc2D.getPixelColumn(i)));
+            final int x = i;
+            executor.execute(()-> distanceTransformedfunc2D.setPixelColumn(x, distanceTransform1D(distanceTransformedfunc2D.getPixelColumn(x))));
         }
-
+        executor.shutdown();
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {}
         return distanceTransformedfunc2D;
     }
+
 
     public double[] distanceTransform1D(double[] func){
         double[] distanceTransform = new double[func.length];
