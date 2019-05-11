@@ -19,7 +19,7 @@ import java.util.List;
 public class MeshCreator {
 
     public static ConformingDelaunayTriangulator doTriangulation(Constraints constraints, PolygonDistanceField probDensFunc, double canvasX, double canvasY){
-        ArrayList<ConstraintVertex> generatedPoints = PointGeneration.cumulativeDistributionMethod(probDensFunc, 4000);
+        ArrayList<FluidVertex> generatedPoints = PointGeneration.cumulativeDistributionMethod(probDensFunc, 4000);
         ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(generatedPoints, 2);
 
         cdt.setConstraints((List) constraints.allSegs.clone(), (List) constraints.allSegVerts.clone());
@@ -50,16 +50,16 @@ public class MeshCreator {
         }
         shellSegs.add(shellCoords.size()-1, new Segment(shellCoords.get(shellCoords.size()-1),shellCoords.get(0)));
 
-        ArrayList<ConstraintVertex> shellSegVerts = new ArrayList<>(shellCoords.size());
+        ArrayList<FluidVertex> shellSegVerts = new ArrayList<>(shellCoords.size());
         for(int i =0; i<shellCoords.size(); i++){
-            shellSegVerts.add(i, new ConstraintVertex(shellCoords.get(i)));
+            shellSegVerts.add(i, new FluidVertex(shellCoords.get(i)));
         }
-        ArrayList<ConstraintVertex> holeSegVerts = new ArrayList<>(holeCoords.size());
+        ArrayList<FluidVertex> holeSegVerts = new ArrayList<>(holeCoords.size());
         for(int i=0; i<holeCoords.size(); i++){
-            holeSegVerts.add(i, new ConstraintVertex(holeCoords.get(i)));
+            holeSegVerts.add(i, new FluidVertex(holeCoords.get(i)));
         }
 
-        ArrayList<ConstraintVertex> allSegVerts = new ArrayList<>(shellSegVerts); allSegVerts.addAll(holeSegVerts);
+        ArrayList<FluidVertex> allSegVerts = new ArrayList<>(shellSegVerts); allSegVerts.addAll(holeSegVerts);
         ArrayList<Segment> allSegs = new ArrayList<>(shellSegs); allSegs.addAll(holeSegs);
 
         Constraints constraints = new Constraints();

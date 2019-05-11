@@ -6,7 +6,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
-import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.quadedge.LocateFailureException;
 
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ import java.util.stream.DoubleStream;
 
 public class PointGeneration {
 
-    public static ArrayList<ConstraintVertex> cumulativeDistributionMethod(PixelSampledFunction probabilityDensityFunction, int numberOfPoints){
+    public static ArrayList<FluidVertex> cumulativeDistributionMethod(PixelSampledFunction probabilityDensityFunction, int numberOfPoints){
         Image1DDoubleArray functionAsPixelSamples = probabilityDensityFunction.functionAsPixelSamples;
         double maxValue = functionAsPixelSamples.getMaxPixelValue();
         DoubleUnaryOperator inputModulation = d -> d==maxValue? 0 : 0.1 + 3000/(d+1500);//Math.pow(Math.pow(maxValue, 1./2.) - Math.pow(d, 1./2.),4) + 1; /*TODO: dithering should not be responsible for this?. Also this map is pixelToDomainRatio dependant*/
@@ -24,7 +23,7 @@ public class PointGeneration {
 
         Image1DDoubleArray cumulativeDistribFuncArray = cumulativeDistributionFunction(probDensFuncArray);
 
-        ArrayList<ConstraintVertex> generatedPoints = new ArrayList<>();
+        ArrayList<FluidVertex> generatedPoints = new ArrayList<>();
 
         while(generatedPoints.size()<numberOfPoints){
             double randomPointInCumulativeFunc = cumulativeDistribFuncArray.rawImageArray[cumulativeDistribFuncArray.rawImageArray.length-1]*Math.random();
@@ -32,7 +31,7 @@ public class PointGeneration {
             int[] chosenPixelXYCoords = probabilityDensityFunction.functionAsPixelSamples.getXYCoordFromArrayIndex(chosenPixelIndex);
             double randomXCoord = probabilityDensityFunction.pixelToDomainCoord(chosenPixelXYCoords[0])+Math.random()-0.5;
             double randomYCoord = probabilityDensityFunction.pixelToDomainCoord(chosenPixelXYCoords[1])+Math.random()-0.5;
-            generatedPoints.add(new ConstraintVertex( new Coordinate(randomXCoord, randomYCoord)));
+            generatedPoints.add(new FluidVertex( new Coordinate(randomXCoord, randomYCoord)));
         }
 
 
@@ -84,7 +83,7 @@ public class PointGeneration {
 
         GeometryFactory genericFactory = new GeometryFactory();
 
-        ArrayList<ConstraintVertex> startVerts = new ArrayList<>();
+        ArrayList<FluidVertex> startVerts = new ArrayList<>();
         
         java.util.List polyList = cdt.getSubdivision().getVoronoiCellPolygons(genericFactory);
 
@@ -109,7 +108,7 @@ public class PointGeneration {
                 }
                 double centerOfMassX = xMoment / totalMass;
                 double centerOfMassY = yMoment / totalMass;
-                startVerts.add(new ConstraintVertex(new Coordinate(centerOfMassX, centerOfMassY)));
+                startVerts.add(new FluidVertex(new Coordinate(centerOfMassX, centerOfMassY)));
             }
         }
         ConformingDelaunayTriangulator cdt2= new ConformingDelaunayTriangulator(startVerts, 2);

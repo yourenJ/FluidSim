@@ -37,20 +37,5 @@ public class FluidMeshTest {
     public void addVertex() {
     }
 
-    @Test
-    public void sortByX() {
-        FluidMesh meshtest = new FluidMesh();
-        FluidVertex fv1 = new FluidVertex(1,2);
-        FluidVertex fv2 = new FluidVertex(2,2);
-        FluidVertex fv3 = new FluidVertex(3,2);
-        meshtest.addVertex( new FluidVertex(2,2));
-        meshtest.addVertex( new FluidVertex(1,2));
-        meshtest.addVertex( new FluidVertex(3,2));
-        FluidVertex fv4 = meshtest.getVertexList().get(1);
-        meshtest.sortByX();
-        List<FluidVertex> L1 = new ArrayList<>();
-        L1.add(0,fv1); L1.add(1,fv2); L1.add(2,fv3);
 
-        assertTrue(meshtest.getVertexList().equals(L1));
-    }
 }

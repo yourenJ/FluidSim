@@ -20,9 +20,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.embed.swing.SwingFXUtils;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
+import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 
 /**  a polygon with draggable corners and the option to create and render a Delaunay triangulation mesh
