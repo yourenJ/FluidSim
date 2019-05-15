@@ -5,11 +5,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
-import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.Segment;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
-import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.ArrayList;
 import java.util.Arrays;

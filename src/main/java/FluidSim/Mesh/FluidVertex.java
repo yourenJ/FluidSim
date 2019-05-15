@@ -6,7 +6,6 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /** fluid vertex for lattice boltzmann method*/
 
@@ -16,7 +15,7 @@ public class FluidVertex extends ConstraintVertex {
     static private final int UP_RIGHT = 5, UP_LEFT = 6, DOWN_LEFT = 7, DOWN_RIGHT = 8;
 
     /*Fluid state variables here:*/
-    DiscretisedVelocityDistributionPoint[] f = new DiscretisedVelocityDistributionPoint[9];
+    DiscretisedVelocityDistributionDirection[] f = new DiscretisedVelocityDistributionDirection[9];
 
     private ArrayList<QuadEdge> containingQuadEdges = new ArrayList<>();
 
@@ -42,48 +41,65 @@ public class FluidVertex extends ConstraintVertex {
         }
     }
 
+    public void orderContainingQuadEdges(){
+        QuadEdge quadEdge = containingQuadEdges.get(0);
+        for(int i = 0; i < containingQuadEdges.size(); i++){
+
+        }
+    }
+
     public ArrayList<QuadEdge> getContainingQuadEdges() {
         return containingQuadEdges;
     }
 
     private void initialiseVelocityDistribution(){
-        f[CENTER] = new DiscretisedVelocityDistributionPoint(0,0,1, 4./9.);
-        f[RIGHT] = new DiscretisedVelocityDistributionPoint(1,0,0, 1./9.);
-        f[UP] = new DiscretisedVelocityDistributionPoint(0,1,0, 1./9.);
-        f[LEFT] = new DiscretisedVelocityDistributionPoint(-1,0,0, 1./9.);
-        f[DOWN] = new DiscretisedVelocityDistributionPoint(0,-1,0, 1./9.);
-        f[UP_RIGHT] = new DiscretisedVelocityDistributionPoint(1,1,0, 1./36.);
-        f[UP_LEFT] = new DiscretisedVelocityDistributionPoint(-1,1,0, 1./36.);
-        f[DOWN_LEFT] = new DiscretisedVelocityDistributionPoint(-1,-1,0, 1./36.);
-        f[DOWN_RIGHT] = new DiscretisedVelocityDistributionPoint(1,-1,0, 1./36.);
+        f[CENTER] = new DiscretisedVelocityDistributionDirection(0,0,1, 4./9.);
+        f[RIGHT] = new DiscretisedVelocityDistributionDirection(1,0,0, 1./9.);
+        f[UP] = new DiscretisedVelocityDistributionDirection(0,1,0, 1./9.);
+        f[LEFT] = new DiscretisedVelocityDistributionDirection(-1,0,0, 1./9.);
+        f[DOWN] = new DiscretisedVelocityDistributionDirection(0,-1,0, 1./9.);
+        f[UP_RIGHT] = new DiscretisedVelocityDistributionDirection(1,1,0, 1./36.);
+        f[UP_LEFT] = new DiscretisedVelocityDistributionDirection(-1,1,0, 1./36.);
+        f[DOWN_LEFT] = new DiscretisedVelocityDistributionDirection(-1,-1,0, 1./36.);
+        f[DOWN_RIGHT] = new DiscretisedVelocityDistributionDirection(1,-1,0, 1./36.);
     }
 
 
 
     class SubTrianglePair{
         private QuadEdge quadEdge;
-        private Coordinate edgeMidpoint;
-        private Coordinate triMidPoint;
+        private Vertex edgeMidpoint;
+        private Vertex triMidPoint;
         private double[] NormalPlus;
         private double[] NormalMinus;
         private double area;
 
+        public SubTrianglePair(QuadEdge quadEdge){
+            this.quadEdge=quadEdge;
+            calculateGeometry();
+        }
+
+        public void calculateGeometry(){
+            this.edgeMidpoint = quadEdge.dest().midPoint(quadEdge.orig());
+            this.triMidPoint = new Vertex(new Coordinate((quadEdge.orig().getX()+quadEdge.dest().getX()+quadEdge.oNext().dest().getX())/3., (quadEdge.orig().getY()+quadEdge.dest().getY()+quadEdge.oNext().dest().getY())/3.))
+            
+        }
     }
 
 
     /**encapsulates data about a particular discretised velocity in the lattice boltzmann method for a vertex*/
-    class DiscretisedVelocityDistributionPoint{
-        private double representedXVelocity;
-        private double representedYVelocity;
+    class DiscretisedVelocityDistributionDirection {
+        private double xVelocity;
+        private double yVelocity;
         private double weight;
-        double probabilityDensity;
+        public double probabilityDensity;
         double[] streamingArray;
 
-        DiscretisedVelocityDistributionPoint(double xVel, double yVel, double probabilityDensity, double weight){
+        DiscretisedVelocityDistributionDirection(double xVel, double yVel, double probabilityDensity, double weight){
             this.probabilityDensity= probabilityDensity;
             this.weight = weight;
-            representedXVelocity=xVel;
-            representedYVelocity=yVel;
+            xVelocity =xVel;
+            yVelocity =yVel;
 
         }
 
@@ -92,12 +108,14 @@ public class FluidVertex extends ConstraintVertex {
         }
 
         public double XVel() {
-            return representedXVelocity;
+            return xVelocity;
         }
 
         public double YVel() {
-            return representedYVelocity;
+            return yVelocity;
         }
+
+
 
     }
 }
